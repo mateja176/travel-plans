@@ -1,0 +1,5 @@
+{
+  "packages": ["server", "app", "e2e"],
+  "version": "0.0.0",
+  "npmClient": "npm"
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trips",
+  "info": {
+    "name": "trip",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "destination": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "comment": {
+      "type": "richtext",
+      "maxLength": 300
+    },
+    "user": {
+      "via": "trips",
+      "plugin": "users-permissions",
+      "model": "user"
+    }
+  }
+}

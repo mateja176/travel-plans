@@ -1,0 +1,226 @@
+diff --git a/node_modules/strapi-plugin-documentation/config/settings.json b/node_modules/strapi-plugin-documentation/config/settings.json
+index bef98b3..4972775 100755
+--- a/node_modules/strapi-plugin-documentation/config/settings.json
++++ b/node_modules/strapi-plugin-documentation/config/settings.json
+@@ -6,9 +6,9 @@
+     "description": "",
+     "termsOfService": "YOUR_TERMS_OF_SERVICE_URL",
+     "contact": {
+-      "name": "TEAM",
+-      "email": "contact-email@something.io",
+-      "url": "mywebsite.io"
++      "name": "Mateja Petrovic",
++      "email": "mateja176@gmail.com",
++      "url": "https://github.com/mateja176"
+     },
+     "license": {
+       "name": "Apache 2.0",
+diff --git a/node_modules/strapi-plugin-documentation/services/Documentation.js b/node_modules/strapi-plugin-documentation/services/Documentation.js
+index e9280c4..74b15fd 100755
+--- a/node_modules/strapi-plugin-documentation/services/Documentation.js
++++ b/node_modules/strapi-plugin-documentation/services/Documentation.js
+@@ -14,6 +14,7 @@ const defaultSettings = require('../config/settings.json');
+ const defaultComponents = require('./utils/components.json');
+ const form = require('./utils/forms.json');
+ const parametersOptions = require('./utils/parametersOptions.json');
++const documentation = require('../../../server/extensions/documentation/documentation/1.0.0/full_documentation.json');
+ 
+ // keys to pick from the extended config
+ const defaultSettingsKeys = Object.keys(defaultSettings);
+@@ -446,11 +447,8 @@ module.exports = {
+             content: {
+               'application/json': {
+                 schema: {
+-                  properties: {
+-                    foo: {
+-                      type: 'string',
+-                    },
+-                  },
++                  type: 'object',
++                  properties: {},
+                 },
+               },
+             },
+@@ -729,11 +727,8 @@ module.exports = {
+               content: {
+                 'application/json': {
+                   schema: {
+-                    properties: {
+-                      foo: {
+-                        type: 'string',
+-                      },
+-                    },
++                    type: 'object',
++                    properties: {},
+                   },
+                 },
+               },
+@@ -775,11 +770,7 @@ module.exports = {
+           };
+         case 'count':
+           return {
+-            properties: {
+-              count: {
+-                type: 'integer',
+-              },
+-            },
++            type: 'integer',
+           };
+         case 'findOne':
+         case 'update':
+@@ -789,21 +780,15 @@ module.exports = {
+           };
+         default:
+           return {
+-            properties: {
+-              foo: {
+-                type: 'string',
+-              },
+-            },
++            type: 'object',
++            properties: {},
+           };
+       }
+     }
+ 
+     return {
+-      properties: {
+-        foo: {
+-          type: 'string',
+-        },
+-      },
++      type: 'object',
++      properties: {},
+     };
+   },
+ 
+@@ -816,11 +801,8 @@ module.exports = {
+ 
+     if (!tag || !actionType) {
+       schema = {
+-        properties: {
+-          foo: {
+-            type: 'string',
+-          },
+-        },
++        type: 'object',
++        properties: {},
+       };
+     } else {
+       schema = this.generatePluginResponseSchema(tag);
+@@ -1043,6 +1025,7 @@ module.exports = {
+     return {
+       components: {
+         schemas: {
++          AnyValue: {},
+           [upperFirstTag]: getComponent,
+           [`New${upperFirstTag}`]: postComponent,
+         },
+@@ -1153,11 +1136,7 @@ module.exports = {
+           };
+         case 'count':
+           return {
+-            properties: {
+-              count: {
+-                type: 'integer',
+-              },
+-            },
++            type: 'integer',
+           };
+         case 'findOne':
+         case 'update':
+@@ -1167,21 +1146,15 @@ module.exports = {
+           };
+         default:
+           return {
+-            properties: {
+-              foo: {
+-                type: 'string',
+-              },
+-            },
++            type: 'object',
++            properties: {},
+           };
+       }
+     }
+ 
+     return {
+-      properties: {
+-        foo: {
+-          type: 'string',
+-        },
+-      },
++      type: 'object',
++      properties: {},
+     };
+   },
+ 
+@@ -1287,7 +1260,67 @@ module.exports = {
+     if (verb === 'get' && controllerMethod === 'find') {
+       // parametersOptions corresponds to this section
+       // of the documentation https://strapi.io/documentation/guides/filters.html
+-      return [...params, ...parametersOptions];
++      const paths = pathToRegexp.parse(endPoint);
++
++      const filters = parametersOptions.slice(3);
++      const correctedParamFilters = [
++        { ...filters[0], name: '_eq' },
++        ...filters.slice(1),
++      ];
++
++      const userFilter = {
++        "name": "user.id",
++        "in": "query",
++        "required": false,
++        "description": "Filter by user id",
++        "schema": {
++          type: 'string',
++        },
++        "deprecated": false
++      };
++
++      const paramFilters =
++        paths.length === 1
++          ? (() => {
++              const [path] = paths;
++              const segments = path.split('/').filter(Boolean);
++              const key = _.upperFirst(
++                _.camelCase(
++                  segments
++                    .slice(0, -1)
++                    .concat(segments[segments.length - 1].slice(0, -1))
++                    .join('-'),
++                ),
++              );
++
++            const schemaProperties = Object.keys(documentation.components.schemas[key].properties);
++
++            return _.flatMap(schemaProperties, (prop) =>
++              correctedParamFilters.map((paramFilter) => ({
++                ...paramFilter,
++                name: `${prop}${paramFilter.name}`,
++              })),
++            ).concat(schemaProperties.includes('user') ? userFilter : []);
++            })()
++          : [];
++
++      const where =   {
++        "name": "_where",
++        "in": "query",
++        "required": false,
++        "description": "Complex query builder",
++        "schema": {
++          $ref: "#/components/schemas/AnyValue",
++        },
++        "deprecated": false
++      }
++
++      return [
++        ...params,
++        ...parametersOptions.slice(0, 3),
++        ...paramFilters,
++        where,
++      ];
+     }
+ 
+     return params;

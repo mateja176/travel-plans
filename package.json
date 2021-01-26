@@ -1,0 +1,24 @@
+{
+  "name": "travel-plans",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:app": "npm run --prefix app start",
+    "start:server": "npm run --prefix app server",
+    "postinstall": "patch-package",
+    "bootstrap": "lerna bootstrap --hoist",
+    "postbootstrap": "npm run postinstall"
+  },
+  "keywords": [],
+  "author": "Mateja Petrovic <mateja176@gmail.com> (https://github.com/mateja176)",
+  "license": "MIT",
+  "devDependencies": {
+    "lerna": "^3.21.0"
+  },
+  "dependencies": {
+    "patch-package": "^6.2.2",
+    "postinstall-postinstall": "^2.1.0"
+  }
+}

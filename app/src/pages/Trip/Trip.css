@@ -1,0 +1,4 @@
+.disabled .react-datepicker__day--keyboard-selected {
+  background-color: white;
+  color: black;
+}
