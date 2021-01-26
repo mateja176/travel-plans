@@ -10,8 +10,7 @@ type Observer = {
 const observers: Array<Observer> = [];
 
 const storage: Storage & {
-  subscribe: (observer: Omit<Observer, 'id'>) => Observer['id'];
-  unsubscribe: (id: Observer['id']) => void;
+  subscribe: (observer: Omit<Observer, 'id'>) => () => void;
 } = {
   getItem: localStorage.getItem.bind(localStorage),
   get length() {
@@ -23,11 +22,12 @@ const storage: Storage & {
 
     observers.push({ ...observer, id });
 
-    return id;
-  },
-  unsubscribe: (id) => {
-    const observerIndex = observers.findIndex((observer) => observer.id === id);
-    observers.splice(observerIndex, 1);
+    return () => {
+      const observerIndex = observers.findIndex(
+        (observer) => observer.id === id,
+      );
+      observers.splice(observerIndex, 1);
+    };
   },
   setItem: (key, value) => {
     localStorage.setItem(key, value);
@@ -59,15 +59,13 @@ export const useLocalStorageItem = <A>(key: string): LocalStorageItem<A> => {
 
   const [item, setItem] = React.useState<A | null>(getItem);
   React.useEffect(() => {
-    const id = storage.subscribe({
+    const unsubscribe = storage.subscribe({
       key,
       observe: (item) => {
         setItem(item && JSON.parse(item));
       },
     });
-    return () => {
-      storage.unsubscribe(id);
-    };
+    return unsubscribe;
   }, [key]);
 
   const setLocalStorageItem = React.useCallback(
