@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start:app": "npm run --prefix app start",
-    "start:server": "npm run --prefix app server",
+    "start:server": "npm run --prefix server start",
     "postinstall": "patch-package",
     "bootstrap": "lerna bootstrap --hoist",
     "postbootstrap": "npm run postinstall"
